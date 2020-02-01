@@ -1,5 +1,6 @@
 #include "ui.h"
 
+
 namespace ui {
 	Menu::Menu(std::string title) : title(title) { }
 
@@ -21,13 +22,16 @@ namespace ui {
 
 			std::cout << title << std::endl;
 
-			for (size_t i = 0; i < items.size(); ++i) {
+			for (size_t i = 0; i < items.size(); ++i)
+			{
 				if (i == chosenItem) {
 					std::cout << "# ";
 				}
 
 				std::cout << items[i].title << std::endl;
 			}
+
+			std::cout << "Use arrow keys to navigate the menu. Press enter to select an item.";
 
 			key = static_cast<Console::Key>(Console::GetChar());
 
@@ -45,6 +49,7 @@ namespace ui {
 			}
 		}
 
+		Console::Clear();
 		items[chosenItem].action();
 	}
 

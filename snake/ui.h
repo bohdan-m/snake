@@ -17,7 +17,7 @@ namespace ui {
 		};
 
 		explicit Menu(std::string);
-		void AddMenuItem(MenuItem item);
+		void AddMenuItem(MenuItem);
 		void Show();
 	private:
 		std::string title;
@@ -30,13 +30,12 @@ namespace ui {
 	public:
 		enum class Key
 		{
-			Enter = 13,
-			Up = 72,
-			Left = 75,
-			Right = 77,
-			Down = 80
+			Enter	= 13,
+			Up		= 72,
+			Left	= 75,
+			Right	= 77,
+			Down	= 80
 		};
-
 
 		static void Clear();
 		static int GetChar();

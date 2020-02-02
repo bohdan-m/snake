@@ -2,18 +2,24 @@
 
 #include "ui.h"
 
+#include <set>
+#include <mutex>
 #include <deque>
 #include <string>
+#include <future>
 #include <random>
-#include <iostream>
-#include <unordered_set>
 #include <cstdlib>
+#include <iostream>
+#include <algorithm>
+#include <unordered_set>
 
 struct Point
 {
 	int x = 0;
 	int	y = 0;
 };
+
+bool operator==(const Point& lhs, const Point& rhs);
 
 enum class Direction
 {
@@ -26,14 +32,23 @@ enum class Direction
 
 class Game
 {
+public:
+	Game();
 	void Start();
+
 private:
 	void Redraw();
 	void NewTarget();
-	void MoveSnake(Direction);
-
-	std::deque<Point> snake;
+	bool MoveSnake(Direction);
+	bool CheckNextMove(const Point&);
+	void GameOver();
+	void ReadUserInputAsync();
+	
 	Point target;
+	std::deque<Point> snake;
+	std::mutex movementDirectionMutex;
+	Direction movementDirection = Direction::Right;
+	
 	int frameWidth = 80;
 	int frameHeight = 26;
 };

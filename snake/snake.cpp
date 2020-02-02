@@ -1,13 +1,15 @@
 #include <iostream>
 
 #include "ui.h"
+#include "game.h"
 
 using namespace ui;
 
 int main()
 {
-    Menu::MenuItem item1 = { "First", [] { std::cout << 1 << std::endl; } };
-    Menu::MenuItem item2 = { "Second", [] { std::cout << 2 << std::endl; } };
+    Game game;
+    Menu::MenuItem item1 = { "New game", [&game] { game.Start(); } };
+    Menu::MenuItem item2 = { "About", [] { } };
 
     Menu menu("Menu");
     menu.AddMenuItem(item1);

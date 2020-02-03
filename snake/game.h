@@ -1,25 +1,20 @@
 #pragma once
 
-#include "ui.h"
+#include "console.h"
+#include "point.h"
 
 #include <set>
+#include <map>
 #include <mutex>
 #include <deque>
 #include <string>
 #include <future>
 #include <random>
+#include <cwchar>
 #include <cstdlib>
 #include <iostream>
 #include <algorithm>
 #include <unordered_set>
-
-struct Point
-{
-	int x = 0;
-	int	y = 0;
-};
-
-bool operator==(const Point& lhs, const Point& rhs);
 
 enum class Direction
 {
@@ -29,11 +24,12 @@ enum class Direction
 	Right
 };
 
+Direction GetOppositeDirection(Direction);
 
 class Game
 {
 public:
-	Game();
+	Game(int screenWidth = 40, int screenHeight = 25);
 	void Start();
 
 private:
@@ -43,12 +39,16 @@ private:
 	bool CheckNextMove(const Point&);
 	void GameOver();
 	void ReadUserInputAsync();
+	void SwitchToGameFont();
+	void RestoreUserFont();
 	
+	int frameWidth;
+	int frameHeight;
+	std::vector<std::string> frameTemplate;
+	bool isGameOver = false;
 	Point target;
 	std::deque<Point> snake;
-	std::mutex movementDirectionMutex;
 	Direction movementDirection = Direction::Right;
-	
-	int frameWidth = 80;
-	int frameHeight = 26;
+	std::mutex access; // mutex for isGameOver and movementDirection members
+	Console::FontInfo userFontInfo;
 };

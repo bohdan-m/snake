@@ -1,7 +1,44 @@
 #include "game.h"
 
-Game::Game()
+Direction GetOppositeDirection(Direction d)
 {
+	switch (d)
+	{
+	case Direction::Up:
+		return Direction::Down;
+	case Direction::Down:
+		return Direction::Up;
+	case Direction::Left:
+		return Direction::Right;
+	case Direction::Right:
+		return Direction::Left;
+	}
+}
+
+Game::Game(int screenWidth, int screenHeight) :
+	frameWidth(screenWidth),
+	frameHeight(screenHeight),
+	frameTemplate(frameHeight, std::string(frameWidth, ' ')),
+	userFontInfo(Console::GetFontInfo())
+{
+	// We draw the border in the frame template 
+	// so that there is no need to do it in Redraw() each time
+
+	for (int i = 1; i < frameWidth - 1; ++i) {
+		frameTemplate[0][i]					= char(205);
+		frameTemplate[frameHeight - 1][i]	= char(205);
+	}
+
+	for (int i = 1; i < frameHeight - 1; ++i) {
+		frameTemplate[i][0]					= char(186);
+		frameTemplate[i][frameWidth - 1]	= char(186);
+	}
+
+	frameTemplate[0][0]								= char(201);
+	frameTemplate[0][frameWidth - 1]				= char(187);
+	frameTemplate[frameHeight - 1][0]				= char(200);
+	frameTemplate[frameHeight - 1][frameWidth - 1]	= char(188);
+
 	snake = { {frameWidth / 2, frameHeight / 2}, 
 			  {frameWidth / 2 - 1, frameHeight / 2}, 
 			  {frameWidth / 2 - 2, frameHeight / 2}
@@ -57,8 +94,8 @@ bool Game::MoveSnake(Direction d)
 
 bool Game::CheckNextMove(const Point& head)
 {
-	if (head.x == -1 || head.x == frameWidth  ||
-		head.y == -1 || head.y == frameHeight)
+	if (head.x == 0 || head.x == frameWidth - 1 ||
+		head.y == 0 || head.y == frameHeight - 1)
 	{
 		return false;
 	}
@@ -73,41 +110,69 @@ bool Game::CheckNextMove(const Point& head)
 
 void Game::GameOver()
 {
-	ui::Console::Clear();
+	access.lock();
+	isGameOver = true;
+	access.unlock();
+	Console::Clear();
 	std::cout << "Game over!" << std::endl;
 }
 
 void Game::ReadUserInputAsync()
 {
-	ui::Console::Key userInput;
+	Console::Key userInput;
 
 	while (true)
 	{
-		userInput = static_cast<ui::Console::Key>(ui::Console::GetChar());
-		movementDirectionMutex.lock();
-		
-		switch (userInput)
-		{
-		case ui::Console::Key::Up:
-			movementDirection = Direction::Up;
-			break;
-		case ui::Console::Key::Left:
-			movementDirection = Direction::Left;
-			break;
-		case ui::Console::Key::Right:
-			movementDirection = Direction::Right;
-			break;
-		case ui::Console::Key::Down:
-			movementDirection = Direction::Down;
+		static std::map<Console::Key, Direction> keyToDirect = {
+			{Console::Key::Up, Direction::Up},
+			{Console::Key::Down, Direction::Down},
+			{Console::Key::Left, Direction::Left},
+			{Console::Key::Right, Direction::Right},
+		};
+
+		userInput = static_cast<Console::Key>(Console::GetChar());
+
+		access.lock();
+
+		if (isGameOver) {
+			access.unlock();
 			break;
 		}
 
-		movementDirectionMutex.unlock();
+		if (keyToDirect.count(userInput) > 0) {
+			if (GetOppositeDirection(movementDirection) != keyToDirect[userInput]) {
+				movementDirection = keyToDirect[userInput];
+			}
+		}
+
+		access.unlock();
 	}
+}
+
+// The snake looks better when width of each character equals to its height.
+// We use a specific font for that. When the game is over we switch back to the old font.
+
+
+void Game::SwitchToGameFont()
+{
+	Console::FontInfo gameFont = userFontInfo;
+	gameFont.FontFamily = 48;
+	gameFont.dwFontSize = { 8, 8 };
+
+	const wchar_t* faceName = L"Terminal";
+	wcscpy_s(gameFont.FaceName, faceName);
+	Console::SetFontInfo(gameFont);
+}
+
+void Game::RestoreUserFont()
+{
+	Console::SetFontInfo(userFontInfo);
 }
 
 void Game::Start()
 {
+	SwitchToGameFont();
+
 	std::future<void> userInputThread = std::async([this] {
 		ReadUserInputAsync();
 	});
@@ -116,25 +181,31 @@ void Game::Start()
 	{
 		Redraw();
 
-		movementDirectionMutex.lock();
+		access.lock();
+
 		if (!MoveSnake(movementDirection))
 		{
-			GameOver();
+			access.unlock();
+			break;
 		}
-		movementDirectionMutex.unlock();
+
+		access.unlock();
 	}
+
+	RestoreUserFont();
+	GameOver();
 }
 
 void Game::Redraw()
 {
-	std::vector<std::string> frame(frameHeight, std::string(frameWidth, ' '));
+	auto frame = frameTemplate;
 	frame[target.y][target.x] = '+';
 
 	for (const auto& p : snake) {
-		frame[p.y][p.x] = '*';
+		frame[p.y][p.x] = char(254);
 	}
 
-	ui::Console::Clear();
+	Console::Clear();
 
 	for (const auto& row : frame) {
 		std::cout << row << std::endl;
@@ -147,13 +218,11 @@ void Game::NewTarget()
 
 	do
 	{
-		new_target = { rand() % frameWidth, rand() % frameHeight };
+		new_target = { 
+			1 + (rand() % (frameWidth - 2)), 
+			1 + (rand() % (frameHeight - 2))
+		};
 	} while (!(std::find(begin(snake), end(snake), new_target) == end(snake)));
 	
 	target = new_target;
-}
-
-bool operator==(const Point& lhs, const Point& rhs)
-{
-	return lhs.x == rhs.x && lhs.y == rhs.y;
 }

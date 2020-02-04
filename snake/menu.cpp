@@ -18,7 +18,7 @@ void Menu::Show()
 	{
 		Console::Clear();
 
-		std::cout << title << std::endl;
+		std::cout << title << std::endl << std::endl;
 
 		for (size_t i = 0; i < items.size(); ++i)
 		{
@@ -29,6 +29,7 @@ void Menu::Show()
 			std::cout << items[i].title << std::endl;
 		}
 
+		std::cout << std::endl;
 		std::cout << "Use arrow keys to navigate the menu. Press enter to select an item.";
 
 		key = static_cast<Console::Key>(Console::GetChar());
@@ -36,10 +37,10 @@ void Menu::Show()
 		switch (key)
 		{
 		case Console::Key::Up:
-			chosenItem = chosenItem == items.size() - 1 ? 0 : chosenItem + 1;
+			chosenItem = chosenItem == 0 ? items.size() - 1 : chosenItem - 1;
 			break;
 		case Console::Key::Down:
-			chosenItem = chosenItem == items.size() - 1 ? 0 : chosenItem + 1;
+			chosenItem = (chosenItem + 1) % items.size();
 			break;
 		case Console::Key::Enter:
 			userHasChosenItem = true;

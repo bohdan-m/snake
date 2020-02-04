@@ -12,6 +12,8 @@ Direction GetOppositeDirection(Direction d)
 		return Direction::Right;
 	case Direction::Right:
 		return Direction::Left;
+	default:
+		return d;
 	}
 }
 
@@ -74,6 +76,7 @@ bool Game::MoveSnake(Direction d)
 		if (head == target)
 		{
 			NewTarget();
+			score += 10;
 		}
 		else 
 		{
@@ -114,7 +117,9 @@ void Game::GameOver()
 	isGameOver = true;
 	access.unlock();
 	Console::Clear();
-	std::cout << "Game over!" << std::endl;
+	std::cout	<< "Game over!" << std::endl
+				<< "Your score: " << score << std::endl
+				<< "Press any key...";
 }
 
 void Game::ReadUserInputAsync()
@@ -208,8 +213,10 @@ void Game::Redraw()
 	Console::Clear();
 
 	for (const auto& row : frame) {
-		std::cout << row << std::endl;
+		std::cout << row << '\n';
 	}
+
+	std::cout << "Score: " << score << std::endl;
 }
 
 void Game::NewTarget()

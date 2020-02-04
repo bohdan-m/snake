@@ -46,6 +46,7 @@ private:
 	int frameHeight;
 	std::vector<std::string> frameTemplate;
 	bool isGameOver = false;
+	int score = 0;
 	Point target;
 	std::deque<Point> snake;
 	Direction movementDirection = Direction::Right;
